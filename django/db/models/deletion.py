@@ -231,10 +231,14 @@ class Collector:
     def related_objects(self, related, objs):
         """
         Get a QuerySet of objects related to `objs` via the relation `related`.
+
+        Only the primary key and the foreign key used by the relation itself are
+        needed for the cascade logic. Loading all fields can trigger decoding of
+        irrelevant data when deleting rows with legacy or malformed values.
         """
         return related.related_model._base_manager.using(self.using).filter(
             **{"%s__in" % related.field.name: objs}
-        )
+        ).only(related.related_model._meta.pk.name, related.field.name)
 
     def instances_with_model(self):
         for model, instances in self.data.items():
